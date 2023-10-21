@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const postsController = require("../controllers/posts.controller");
+const usersController = require("../controllers/users.controller");
 const multer = require("multer");
 
 const storage = multer.diskStorage({
@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = file.mimetype.split("/")[1];
-    const fileName = `post-${Date.now()}.${ext}`;
+    const fileName = `user-${Date.now()}.${ext}`;
     cb(null, fileName);
   },
 });
@@ -23,17 +23,17 @@ const fileFilter = (req, file, cb) => {
 };
 const upload = multer({ storage, fileFilter });
 
-router
-  .route("/")
-  .get(postsController.getAllPosts)
-  .post(upload.single("image"), postsController.addPost);
+router.route("/").get(usersController.getAllUsers);
+
+router.post("/register", upload.single("avatar"), usersController.register);
+router.post("/login", usersController.login);
 
 router
-  .route("/:postId")
-  .get(postsController.getPost)
-  .delete(postsController.deletePost)
-  .patch(postsController.updatePost);
+  .route("/:userId")
+  .get(usersController.getUser)
+  .delete(usersController.deleteUser)
+  .patch(usersController.updateUser);
 
-router.post("/filter", postsController.filterPosts);
+router.post("/filter", usersController.filterUsers);
 
 module.exports = router;

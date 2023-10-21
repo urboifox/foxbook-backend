@@ -16,6 +16,7 @@ app.use(express.json());
 app.use("uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/posts", require("./routes/posts.routes"));
+app.use("/api/users", require("./routes/users.routes"));
 
 app.all("*", (_, res) => {
   res

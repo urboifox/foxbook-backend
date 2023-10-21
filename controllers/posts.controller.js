@@ -22,7 +22,7 @@ const addPost = asyncWrapper(async (req, res) => {
   const newPost = new Post({
     title,
     description,
-    image: req.file.filename || null,
+    image: req.file?.filename || null,
   });
 
   await newPost.save();
