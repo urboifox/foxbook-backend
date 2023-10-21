@@ -4,6 +4,8 @@ const asyncWrapper = require("../middlewares/asyncWrapper");
 const appError = require("../utils/appError");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const generateJWT = require("../utils/generateJWT");
 
 const getAllUsers = asyncWrapper(async (_, res) => {
   const users = await User.find({}, { __v: false });
@@ -20,7 +22,7 @@ const getUser = asyncWrapper(async (req, res, next) => {
 });
 
 const register = asyncWrapper(async (req, res, next) => {
-  const { firstName, lastName, email, password, age, token, role } = req.body;
+  const { firstName, lastName, email, password, age, role } = req.body;
   const isEmailValid = validator.isEmail(email);
   if (!isEmailValid) {
     return next(appError(`Email is not valid`, 400, httpStatus.FAIL));
@@ -32,18 +34,21 @@ const register = asyncWrapper(async (req, res, next) => {
 
   const hashedPass = await bcrypt.hash(password, 10);
 
+  const jwt_token = generateJWT({ email, password, role });
+
   const newUser = new User({
     firstName,
     lastName,
     email,
     password: hashedPass,
     age: age || null,
-    token: token || null,
+    token: jwt_token || null,
     role,
     avatar: req.file?.filename,
   });
 
   await newUser.save();
+
   res.status(201).json({ status: httpStatus.SUCCESS, data: { user: newUser } });
 });
 
@@ -55,14 +60,15 @@ const login = asyncWrapper(async (req, res, next) => {
     );
   }
   const user = await User.findOne({ email });
-  if (!user) {
-    return next(appError(`Email is incorrect`));
-  }
   const validPass = await bcrypt.compare(password, user.password);
-  if (!validPass) {
-    return next(appError(`Password is incorrect`));
+  if (user && validPass) {
+    // logged in success
+    const token = generateJWT({ email, password, role: user.role });
+
+    res.json({ status: httpStatus.SUCCESS, data: { token } });
+  } else {
+    return next(appError(`Email or password are incorrect`));
   }
-  res.json({ status: httpStatus.SUCCESS, data: { user: `Logged in!` } });
 });
 
 const deleteUser = asyncWrapper(async (req, res, next) => {
