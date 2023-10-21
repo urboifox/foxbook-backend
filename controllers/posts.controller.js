@@ -18,11 +18,11 @@ const getPost = asyncWrapper(async (req, res, next) => {
 });
 
 const addPost = asyncWrapper(async (req, res) => {
-  const { title, description } = req.body;
+  const data = req.body;
+  // const { email, role, firstName, lastName, avatar, _id } = req.currentUser;
   const newPost = new Post({
-    title,
-    description,
-    image: req.file?.filename || null,
+    ...data,
+    image: req.file?.filename,
   });
 
   await newPost.save();
@@ -50,7 +50,7 @@ const updatePost = asyncWrapper(async (req, res, next) => {
 });
 
 const filterPosts = asyncWrapper(async (req, res) => {
-  const deletedPosts = await Post.deleteMany({ image: null });
+  const deletedPosts = await Post.deleteMany({ __v: 0 });
   res.json({ status: httpStatus.SUCCESS, data: { posts: deletedPosts } });
 });
 

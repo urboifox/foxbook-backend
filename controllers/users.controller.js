@@ -34,7 +34,9 @@ const register = asyncWrapper(async (req, res, next) => {
 
   const hashedPass = await bcrypt.hash(password, 10);
 
-  const jwt_token = generateJWT({ email, password, role });
+  const jwt_token = generateJWT({
+    email,
+  });
 
   const newUser = new User({
     firstName,
@@ -42,7 +44,7 @@ const register = asyncWrapper(async (req, res, next) => {
     email,
     password: hashedPass,
     age: age || null,
-    token: jwt_token || null,
+    token: jwt_token,
     role,
     avatar: req.file?.filename,
   });
@@ -60,15 +62,37 @@ const login = asyncWrapper(async (req, res, next) => {
     );
   }
   const user = await User.findOne({ email });
+  if (!user) {
+    return next(
+      appError(`Email or password are incorrect`, 400, httpStatus.FAIL)
+    );
+  }
   const validPass = await bcrypt.compare(password, user.password);
-  if (user && validPass) {
+  if (validPass) {
     // logged in success
-    const token = generateJWT({ email, password, role: user.role });
-
+    const token = generateJWT({
+      email,
+      _id: user._id,
+    });
     res.json({ status: httpStatus.SUCCESS, data: { token } });
   } else {
-    return next(appError(`Email or password are incorrect`));
+    return next(
+      appError(`Email or password are incorrect`, 400, httpStatus.FAIL)
+    );
   }
+});
+
+const profile = asyncWrapper(async (req, res, next) => {
+  const userId = req.currentUser._id;
+  const user = await User.findById(userId, {
+    __v: false,
+    password: false,
+    token: false,
+  });
+  if (!user) {
+    return next(appError(`User not found`, 404, httpStatus.FAIL));
+  }
+  res.status(200).json({ status: httpStatus.SUCCESS, data: { user } });
 });
 
 const deleteUser = asyncWrapper(async (req, res, next) => {
@@ -104,4 +128,5 @@ module.exports = {
   deleteUser,
   updateUser,
   filterUsers,
+  profile,
 };

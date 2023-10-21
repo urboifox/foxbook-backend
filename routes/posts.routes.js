@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const postsController = require("../controllers/posts.controller");
 const multer = require("multer");
+const verifyToken = require("../middlewares/verifyToken");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -26,7 +27,7 @@ const upload = multer({ storage, fileFilter });
 router
   .route("/")
   .get(postsController.getAllPosts)
-  .post(upload.single("image"), postsController.addPost);
+  .post(verifyToken, upload.single("image"), postsController.addPost);
 
 router
   .route("/:postId")

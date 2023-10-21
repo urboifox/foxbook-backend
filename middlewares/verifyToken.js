@@ -3,10 +3,9 @@ const jwt = require("jsonwebtoken");
 const httpStatus = require("../utils/httpStatus");
 
 const verifyToken = (req, res, next) => {
-  const authHeader =
-    req.headers["Authorization"] || req.headers["authorization"];
+  const authHeader = req.headers["authorization"];
   if (!authHeader) {
-    next(appError(`Token is required`, 401, httpStatus.FAIL));
+    return next(appError(`Token is required`, 401, httpStatus.FAIL));
   }
   const token = authHeader.split(" ")[1];
   try {

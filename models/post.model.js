@@ -1,11 +1,12 @@
 const mongoose = require("mongoose");
+const User = require("./user.model");
 
 const postSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
   },
-  description: {
+  content: {
     type: String,
     required: true,
   },
@@ -14,8 +15,12 @@ const postSchema = new mongoose.Schema({
     default: Date.now(),
   },
   user: {
-    type: String,
-    // required: true,
+    firstName: String,
+    lastName: String,
+    email: String,
+    role: String,
+    avatar: String,
+    _id: String,
   },
   image: {
     type: String,
