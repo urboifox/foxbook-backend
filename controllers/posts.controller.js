@@ -19,7 +19,6 @@ const getPost = asyncWrapper(async (req, res, next) => {
 
 const addPost = asyncWrapper(async (req, res) => {
   const data = req.body;
-  // const { email, role, firstName, lastName, avatar, _id } = req.currentUser;
   const newPost = new Post({
     ...data,
     image: req.file?.filename,

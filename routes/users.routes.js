@@ -31,13 +31,12 @@ router.route("/").get(verifyToken, usersController.getAllUsers);
 router.post("/register", upload.single("avatar"), usersController.register);
 router.post("/login", usersController.login);
 router.get("/profile", verifyToken, usersController.profile);
+router.get("/filter", usersController.filterUsers);
 
 router
   .route("/:userId")
   .get(usersController.getUser)
   .delete(verifyToken, allowedTo(userRoles.ADMIN), usersController.deleteUser)
   .patch(usersController.updateUser);
-
-router.post("/filter", usersController.filterUsers);
 
 module.exports = router;

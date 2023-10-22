@@ -73,6 +73,7 @@ const login = asyncWrapper(async (req, res, next) => {
     const token = generateJWT({
       email,
       _id: user._id,
+      role: user.role,
     });
     res.json({ status: httpStatus.SUCCESS, data: { token } });
   } else {
@@ -116,7 +117,7 @@ const updateUser = asyncWrapper(async (req, res, next) => {
 });
 
 const filterUsers = asyncWrapper(async (req, res) => {
-  const deletedUsers = await User.deleteMany({ avatar: null });
+  const deletedUsers = await User.deleteMany({ age: "69" });
   res.json({ status: httpStatus.SUCCESS, data: { users: deletedUsers } });
 });
 
