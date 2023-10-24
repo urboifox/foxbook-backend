@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const PORT = process.env.PORT || 4000;
 const httpStatus = require("./utils/httpStatus");
 const path = require("path");
+const fs = require("fs");
 
 mongoose.connect(process.env.DB_URI).then(() => {
   console.log(`Connected to DB`);
@@ -14,6 +15,11 @@ mongoose.connect(process.env.DB_URI).then(() => {
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.json());
+
+if (!fs.existsSync(path.join(__dirname, "uploads"))) {
+  fs.mkdirSync(path.join(__dirname, "uploads"));
+}
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/posts", require("./routes/posts.routes"));
