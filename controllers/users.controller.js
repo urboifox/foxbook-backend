@@ -18,7 +18,7 @@ const getUser = asyncWrapper(async (req, res, next) => {
   if (!user) {
     return next(appError(`User not found`, 404, httpStatus.FAIL));
   }
-  res.status(200).json({ status: httpStatus.SUCCESS, data: { User } });
+  res.status(200).json({ status: httpStatus.SUCCESS, data: { user } });
 });
 
 const register = asyncWrapper(async (req, res, next) => {
@@ -46,6 +46,7 @@ const register = asyncWrapper(async (req, res, next) => {
     age: age || null,
     token: jwt_token,
     role,
+    posts: [],
     avatar: req.file?.filename,
   });
 

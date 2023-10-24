@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const userRoles = require("../utils/userRoles");
+const Post = require("./post.model");
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -29,6 +30,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "avatar.png",
   },
+  posts: [Post],
 });
 
 const User = mongoose.model("User", userSchema);
