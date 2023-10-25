@@ -37,6 +37,6 @@ router
   .route("/:userId")
   .get(usersController.getUser)
   .delete(verifyToken, allowedTo(userRoles.ADMIN), usersController.deleteUser)
-  .patch(usersController.updateUser);
+  .patch(upload.single("avatar"), usersController.updateUser);
 
 module.exports = router;

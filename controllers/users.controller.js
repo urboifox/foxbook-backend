@@ -4,8 +4,10 @@ const asyncWrapper = require("../middlewares/asyncWrapper");
 const appError = require("../utils/appError");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const generateJWT = require("../utils/generateJWT");
+const fs = require("fs");
+const Post = require("../models/post.model");
+const path = require("path");
 
 const getAllUsers = asyncWrapper(async (_, res) => {
   const users = await User.find({}, { __v: false });
@@ -113,8 +115,42 @@ const updateUser = asyncWrapper(async (req, res, next) => {
   if (!user) {
     return next(appError(`User not found`, 404, httpStatus.FAIL));
   }
-  const newUser = await User.updateOne({ _id: userId }, req.body);
-  res.json({ status: httpStatus.SUCCESS, data: { user: newUser } });
+
+  const { firstName, lastName, age, email, role } = req.body;
+
+  try {
+    if (req.file) {
+      fs.unlinkSync(path.join(__dirname, "..", "uploads", user.avatar));
+      await Post.updateMany(
+        { "user._id": userId },
+        { $set: { "user.avatar": req.file.filename } }
+      );
+    }
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          firstName,
+          lastName,
+          age,
+          email,
+          role,
+          avatar: req.file?.filename,
+          posts: req.file
+            ? user.posts.map((post) => ({
+                ...post,
+                user: { avatar: req.file.filename },
+              }))
+            : user.posts,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({ status: httpStatus.SUCCESS, data: { user: updatedUser } });
+  } catch (error) {
+    res.json({ status: httpStatus.FAIL, message: error.message });
+  }
 });
 
 const filterUsers = asyncWrapper(async (req, res) => {

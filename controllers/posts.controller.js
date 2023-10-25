@@ -69,11 +69,16 @@ const updatePost = asyncWrapper(async (req, res, next) => {
   if (!post) {
     return next(appError(`Post not found`, 404, httpStatus.FAIL));
   }
-  const newPost = await Post.updateOne({ _id: postId }, req.body);
+
+  const { title, content } = req.body;
+
+  const newPost = await Post.findByIdAndUpdate(postId, {
+    $set: { title, content },
+  });
 
   const user = await User.findById(post.user._id);
 
-  user.posts = user.posts.filter((p) => p._id.toString() !== postId);
+  user.posts = user.posts.filter((p) => p._id !== postId);
   user.posts.push(newPost);
   await user.save();
 
