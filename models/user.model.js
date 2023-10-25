@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "avatar.png",
   },
-  posts: [Post],
+  posts: [Post.schema],
 });
 
 const User = mongoose.model("User", userSchema);
