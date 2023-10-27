@@ -86,17 +86,28 @@ const updatePost = asyncWrapper(async (req, res, next) => {
 
   const { title, content } = req.body;
 
-  const newPost = await Post.findByIdAndUpdate(postId, {
-    $set: { title, content },
-  });
+  const updatedPost = await Post.findOneAndUpdate(
+    { _id: postId },
+    { $set: { title, content } },
+    { new: true }
+  );
 
+  if (!updatedPost) {
+    return next(appError(`Failed to update the post`, 500, httpStatus.FAIL));
+  }
+
+  // Update the user's posts array
   const user = await User.findById(post.user._id);
 
-  user.posts = user.posts.filter((p) => p._id !== postId);
-  user.posts.push(newPost);
-  await user.save();
+  // Find and update the old post in the user's posts array
+  const index = user.posts.findIndex((p) => p._id.toString() === postId);
 
-  res.json({ status: httpStatus.SUCCESS, data: { post: newPost } });
+  if (index !== -1) {
+    user.posts[index] = updatedPost;
+    await user.save();
+  }
+
+  res.json({ status: httpStatus.SUCCESS, data: { post: updatedPost } });
 });
 
 module.exports = {
