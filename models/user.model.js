@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: "avatar.png",
+    default: "https://foxbook.s3.eu-central-1.amazonaws.com/avatar.png",
   },
   posts: [Post.schema],
 });

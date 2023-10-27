@@ -32,9 +32,7 @@ router
 router
   .route("/:postId")
   .get(postsController.getPost)
-  .delete(postsController.deletePost)
-  .patch(postsController.updatePost);
-
-router.post("/filter", postsController.filterPosts);
+  .delete(verifyToken, postsController.deletePost)
+  .patch(verifyToken, postsController.updatePost);
 
 module.exports = router;

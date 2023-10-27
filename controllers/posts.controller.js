@@ -4,6 +4,7 @@ const asyncWrapper = require("../middlewares/asyncWrapper");
 const appError = require("../utils/appError");
 const User = require("../models/user.model");
 const fs = require("fs");
+const { uploadFile } = require("../utils/s3");
 
 const getAllPosts = asyncWrapper(async (_, res) => {
   const posts = await Post.find({}, { __v: false });
@@ -21,10 +22,18 @@ const getPost = asyncWrapper(async (req, res, next) => {
 
 const addPost = asyncWrapper(async (req, res, next) => {
   const data = await req.body;
+  const file = req.file;
+
+  let response;
+  if (file) {
+    response = await uploadFile(file).catch((err) => {
+      console.log(`error in uploading file: ${err}`);
+    });
+  }
 
   const newPost = new Post({
     ...data,
-    image: req.file?.filename,
+    image: response?.Location,
   });
 
   await newPost.save();
@@ -36,6 +45,11 @@ const addPost = asyncWrapper(async (req, res, next) => {
 
   user.posts.push(newPost);
   await user.save();
+
+  const path = `${__dirname}/../uploads/${response?.Key}`;
+  if (fs.existsSync(path)) {
+    fs.unlinkSync(path);
+  }
 
   res
     .status(201)
@@ -85,16 +99,10 @@ const updatePost = asyncWrapper(async (req, res, next) => {
   res.json({ status: httpStatus.SUCCESS, data: { post: newPost } });
 });
 
-const filterPosts = asyncWrapper(async (req, res) => {
-  const deletedPosts = await Post.deleteMany({ __v: 0 });
-  res.json({ status: httpStatus.SUCCESS, data: { posts: deletedPosts } });
-});
-
 module.exports = {
   getAllPosts,
   getPost,
   addPost,
   deletePost,
   updatePost,
-  filterPosts,
 };

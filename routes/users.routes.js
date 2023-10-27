@@ -31,7 +31,6 @@ router.route("/").get(verifyToken, usersController.getAllUsers);
 router.post("/register", upload.single("avatar"), usersController.register);
 router.post("/login", usersController.login);
 router.get("/profile", verifyToken, usersController.profile);
-router.get("/filter", usersController.filterUsers);
 
 router
   .route("/:userId")

@@ -8,6 +8,7 @@ const generateJWT = require("../utils/generateJWT");
 const fs = require("fs");
 const Post = require("../models/post.model");
 const path = require("path");
+const { uploadFile } = require("../utils/s3");
 
 const getAllUsers = asyncWrapper(async (_, res) => {
   const users = await User.find({}, { __v: false });
@@ -24,6 +25,8 @@ const getUser = asyncWrapper(async (req, res, next) => {
 });
 
 const register = asyncWrapper(async (req, res, next) => {
+  const file = req.file;
+
   const { firstName, lastName, email, password, age, role } = req.body;
   const isEmailValid = validator.isEmail(email);
   if (!isEmailValid) {
@@ -40,6 +43,13 @@ const register = asyncWrapper(async (req, res, next) => {
     email,
   });
 
+  let response;
+  if (file) {
+    response = await uploadFile(file).catch((err) => {
+      console.log(`error in uploading file: ${err}`);
+    });
+  }
+
   const newUser = new User({
     firstName,
     lastName,
@@ -49,10 +59,15 @@ const register = asyncWrapper(async (req, res, next) => {
     token: jwt_token,
     role,
     posts: [],
-    avatar: req.file?.filename,
+    avatar: response?.Location,
   });
 
   await newUser.save();
+
+  const path = `${__dirname}/../uploads/${response?.Key}`;
+  if (fs.existsSync(path)) {
+    fs.unlinkSync(path);
+  }
 
   res.status(201).json({ status: httpStatus.SUCCESS, data: { user: newUser } });
 });
@@ -118,14 +133,30 @@ const updateUser = asyncWrapper(async (req, res, next) => {
 
   const { firstName, lastName, age, email, role } = req.body;
 
+  const file = req.file;
+
   try {
-    if (req.file) {
-      fs.unlinkSync(path.join(__dirname, "..", "uploads", user.avatar));
-      await Post.updateMany(
-        { "user._id": userId },
-        { $set: { "user.avatar": req.file.filename } }
-      );
+    let response;
+    if (file) {
+      response = await uploadFile(file).catch((err) => {
+        console.log(`error in uploading file: ${err}`);
+      });
     }
+
+    await Post.updateMany(
+      { "user._id": userId },
+      {
+        $set: {
+          "user.firstName": firstName,
+          "user.lastName": lastName,
+          "user.age": age,
+          "user.email": email,
+          "user.role": role,
+          "user.avatar": response?.Location,
+        },
+      }
+    ).catch((err) => console.log(err));
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
@@ -135,27 +166,23 @@ const updateUser = asyncWrapper(async (req, res, next) => {
           age,
           email,
           role,
-          avatar: req.file?.filename,
-          posts: req.file
-            ? user.posts.map((post) => ({
-                ...post,
-                user: { avatar: req.file.filename },
-              }))
-            : user.posts,
+          avatar: response?.Location || user.avatar,
         },
       },
       { new: true }
     );
 
+    console.log(updatedUser);
+
+    const path = `${__dirname}/../uploads/${response?.Key}`;
+    if (fs.existsSync(path)) {
+      fs.unlinkSync(path);
+    }
+
     res.json({ status: httpStatus.SUCCESS, data: { user: updatedUser } });
   } catch (error) {
     res.json({ status: httpStatus.FAIL, message: error.message });
   }
-});
-
-const filterUsers = asyncWrapper(async (req, res) => {
-  const deletedUsers = await User.deleteMany({ age: "69" });
-  res.json({ status: httpStatus.SUCCESS, data: { users: deletedUsers } });
 });
 
 module.exports = {
@@ -165,6 +192,5 @@ module.exports = {
   login,
   deleteUser,
   updateUser,
-  filterUsers,
   profile,
 };
